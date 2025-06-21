@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Panel - Clinic Management</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+</head>
+<body>
+    <div class="header">
+        <h1>Admin Dashboard</h1>
+    </div>
+    <div class="container">
+        <div class="sidebar">
+            <div class="sidebar-item active" data-target="add-staff-section">
+                <i class="fas fa-user-plus icon"></i>
+                <span>Add Staff</span>
+            </div>
+            <div class="sidebar-item" data-target="audit-log-section">
+                <i class="fas fa-clipboard-list icon"></i>
+                <span>Audit Log</span>
+            </div>
+            <div class="sidebar-item" data-target="view-staff-section">
+                <i class="fas fa-users icon"></i>
+                <span>View Staff</span>
+            </div>
+        </div>
+        <div class="main-content">
+            <section id="add-staff-section" class="content-section active">
+                <h2><i class="fas fa-user-plus"></i> Add New Staff Member</h2>
+                <form id="add-staff-form" class="form-container">
+                    <div class="form-group">
+                        <label for="staff-name">Name:</label>
+                        <input type="text" id="staff-name" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="staff-surname">Surname:</label>
+                        <input type="text" id="staff-surname" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="staff-email">Email:</label>
+                        <input type="email" id="staff-email" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="staff-photo">Staff Photo:</label>
+                        <input type="file" id="staff-photo" accept="image/*">
+                        <div class="photo-preview" id="photo-preview">
+                            <i class="fas fa-camera"></i>
+                            <span>Upload Image</span>
+                        </div>
+                    </div>
+                    <button type="submit" class="btn"><i class="fas fa-plus"></i> Add Staff</button>
+                </form>
+            </section>
+
+            <section id="audit-log-section" class="content-section">
+                <h2><i class="fas fa-clipboard-list"></i> Audit Log</h2>
+                <div class="audit-table-container">
+                    <table id="audit-table">
+                        <thead>
+                            <tr>
+                                <th>User</th>
+                                <th>Action</th>
+                                <th>Date & Time</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            </tbody>
+                    </table>
+                </div>
+            </section>
+
+            <section id="view-staff-section" class="content-section">
+                <h2><i class="fas fa-users"></i> All Staff Members</h2>
+                <div id="staff-list-container" class="staff-cards-grid">
+                    </div>
+            </section>
+
+            <section id="staff-detail-section" class="content-section staff-detail-panel">
+                <div class="staff-detail-header">
+                    <img id="detail-staff-photo" src="" alt="Staff Photo" class="detail-photo-lg">
+                    <h2 id="detail-staff-name-surname"></h2>
+                </div>
+                <form id="staff-detail-form" class="form-container">
+                    <div class="form-group">
+                        <label for="detail-name">Name:</label>
+                        <input type="text" id="detail-name" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="detail-surname">Surname:</label>
+                        <input type="text" id="detail-surname" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="detail-email">Email:</label>
+                        <input type="email" id="detail-email" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="detail-status">Status:</label>
+                        <select id="detail-status">
+                            <option value="active">Active</option>
+                            <option value="inactive">Inactive</option>
+                        </select>
+                    </div>
+                    <button type="submit" class="btn btn-update"><i class="fas fa-save"></i> Save Changes</button>
+                    <button type="button" class="btn btn-back" id="back-to-view-staff"><i class="fas fa-arrow-left"></i> Back to Staff List</button>
+                </form>
+            </section>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
