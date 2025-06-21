@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Clinic Dashboard</title>
+  <link rel="stylesheet" href="allPatientsAccess.css" />
+</head>
+<body>
+  <div class="container">
+    <aside class="sidebar">
+      <h2 class="clinic-title">Clinic</h2>
+      <nav>
+        <ul>
+          <li onclick="showAllPatients()">📋 All Patients</li>
+          <li><a href="index.html">➕ Add New Patient</a></li>
+        </ul>
+      </nav>
+    </aside>
+
+    <main class="content">
+      <h2>All Patients</h2>
+      <div id="patient-list"></div>
+    </main>
+  </div>
+
+  <script>
+   const patients = [
+      {
+        name: "Junior",
+        surname: "Tseka",
+        idNumber: "990101125551",
+        email: "studentJA@vut.com",
+        contact: "064662346",
+        gender: "Male"
+      },
+      {
+        name: "Kgaugelo",
+        surname: "Masemola",
+        idNumber: "8905055678099",
+        email: "KayGa@Sonke.com",
+        contact: "0839876543",
+        gender: "Male"
+      }
+    ];
+
+    function censorId(id) {
+      return id.slice(0, 3) + '********' + id.slice(-2);
+    }
+
+    function showAllPatients() {
+      const list = document.getElementById("patient-list");
+      list.innerHTML = "";
+
+      if (patients.length === 0) {
+        list.innerHTML = "<p>No patients found.</p>";
+        return;
+      }
+
+      const table = document.createElement("table");
+      table.className = "patient-table";
+      table.innerHTML = `
+        <thead>
+          <tr>
+            <th>Name</th>
+            <th>Surname</th>
+            <th>ID Number</th>
+            <th>Email</th>
+            <th>Contact</th>
+            <th>Gender</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${patients
+            .map(
+              (p) => `
+            <tr>
+              <td>${p.name}</td>
+              <td>${p.surname}</td>
+              <td>${censorId(p.idNumber)}</td>
+              <td>${p.email}</td>
+              <td>${p.contact}</td>
+              <td>${p.gender}</td>
+            </tr>
+          `
+            )
+            .join("")}
+        </tbody>
+      `;
+      list.appendChild(table);
+    }
+
+    showAllPatients();
+  </script>
+</body>
+</html>
