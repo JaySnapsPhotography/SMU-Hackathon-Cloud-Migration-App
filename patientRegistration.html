@@ -10,7 +10,7 @@
 
         <title>Patient Registration</title>
 
-  <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="patientRegStyle.css">
 </head>
 
 
@@ -47,6 +47,33 @@
 
     </form>
   </div>
+
+  <script>
+  document.querySelector("form").addEventListener("submit", async function(e) {
+    e.preventDefault();
+
+    const patient = {
+      name: document.getElementById("name").value,
+      surname: document.getElementById("surname").value,
+      idNumber: document.getElementById("id").value,
+      email: document.getElementById("email").value,
+      contact: document.getElementById("contact").value,
+      gender: document.getElementById("gender").value,
+      condition: "",
+      prescription: ""
+    };
+
+    try {
+      await db.collection("patients").add(patient);
+      alert("Patient added successfully!");
+      this.reset();
+    } catch (error) {
+      console.error("Error adding patient:", error);
+      alert("Something went wrong.");
+    }
+  });
+</script>
+
 
 </body>
 </html>

@@ -15,6 +15,7 @@
           <li onclick="showAllPatients()">📋 All Patients</li>
           <li><a href="index.html">➕ Add New Patient</a></li>
         </ul>
+        <button onclick="confirmLogout()" class="logout-btn">🚪 Logout</button>
       </nav>
     </aside>
 
@@ -25,72 +26,106 @@
   </div>
 
   <script>
-   const patients = [
-      {
-        name: "Junior",
-        surname: "Tseka",
-        idNumber: "990101125551",
-        email: "studentJA@vut.com",
-        contact: "064662346",
-        gender: "Male"
-      },
-      {
-        name: "Kgaugelo",
-        surname: "Masemola",
-        idNumber: "8905055678099",
-        email: "KayGa@Sonke.com",
-        contact: "0839876543",
-        gender: "Male"
-      }
-    ];
-
-    function censorId(id) {
-      return id.slice(0, 3) + '********' + id.slice(-2);
+  let patients = [
+    {
+      name: "Junior",
+      surname: "Tseka",
+      idNumber: "990101125551",
+      email: "studentJA@vut.com",
+      contact: "064662346",
+      gender: "Male"
+    },
+    {
+      name: "Kgaugelo",
+      surname: "Masemola",
+      idNumber: "8905055678099",
+      email: "KayGa@Sonke.com",
+      contact: "0839876543",
+      gender: "Male"
     }
+  ];
 
-    function showAllPatients() {
-      const list = document.getElementById("patient-list");
-      list.innerHTML = "";
+  function censorId(id) {
+    return id.slice(0, 3) + '********' + id.slice(-2);
+  }
 
-      if (patients.length === 0) {
-        list.innerHTML = "<p>No patients found.</p>";
-        return;
-      }
+  function showAllPatients() {
+    const list = document.getElementById("patient-list");
+    list.innerHTML = "";
 
-      const table = document.createElement("table");
-      table.className = "patient-table";
-      table.innerHTML = `
-        <thead>
-          <tr>
-            <th>Name</th>
-            <th>Surname</th>
-            <th>ID Number</th>
-            <th>Email</th>
-            <th>Contact</th>
-            <th>Gender</th>
+    const table = document.createElement("table");
+    table.className = "patient-table";
+    table.innerHTML = `
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Surname</th>
+          <th>ID Number</th>
+          <th>Email</th>
+          <th>Contact</th>
+          <th>Gender</th>
+          <th>Action</th>
+        </tr>
+      </thead>
+      <tbody>
+        ${patients
+          .map(
+            (p, i) => `
+          <tr id="row-${i}">
+            <td><span class="text">${p.name}</span><input class="edit" type="text" value="${p.name}" style="display:none"></td>
+            <td><span class="text">${p.surname}</span><input class="edit" type="text" value="${p.surname}" style="display:none"></td>
+            <td>${censorId(p.idNumber)}</td>
+            <td><span class="text">${p.email}</span><input class="edit" type="text" value="${p.email}" style="display:none"></td>
+            <td><span class="text">${p.contact}</span><input class="edit" type="text" value="${p.contact}" style="display:none"></td>
+            <td><span class="text">${p.gender}</span><select class="edit" style="display:none">
+                  <option value="Male" ${p.gender === 'Male' ? 'selected' : ''}>Male</option>
+                  <option value="Female" ${p.gender === 'Female' ? 'selected' : ''}>Female</option>
+                </select></td>
+            <td>
+              <button onclick="editRow(${i})" class="edit-btn">Edit</button>
+              <button onclick="saveRow(${i})" class="save-btn" style="display:none">Save</button>
+            </td>
           </tr>
-        </thead>
-        <tbody>
-          ${patients
-            .map(
-              (p) => `
-            <tr>
-              <td>${p.name}</td>
-              <td>${p.surname}</td>
-              <td>${censorId(p.idNumber)}</td>
-              <td>${p.email}</td>
-              <td>${p.contact}</td>
-              <td>${p.gender}</td>
-            </tr>
-          `
-            )
-            .join("")}
-        </tbody>
-      `;
-      list.appendChild(table);
-    }
+        `
+          )
+          .join("")}
+      </tbody>
+    `;
+    list.appendChild(table);
+  }
 
-    showAllPatients();
-  </script>
+  function editRow(index) {
+    const row = document.getElementById(`row-${index}`);
+    row.querySelectorAll(".text").forEach(span => span.style.display = "none");
+    row.querySelectorAll(".edit").forEach(input => input.style.display = "inline-block");
+    row.querySelector(".edit-btn").style.display = "none";
+    row.querySelector(".save-btn").style.display = "inline-block";
+  }
+
+  function saveRow(index) {
+    const row = document.getElementById(`row-${index}`);
+    const inputs = row.querySelectorAll(".edit");
+
+    // Update the patients array
+    patients[index].name = inputs[0].value;
+    patients[index].surname = inputs[1].value;
+    patients[index].email = inputs[2].value;
+    patients[index].contact = inputs[3].value;
+    patients[index].gender = inputs[4].value;
+
+    showAllPatients(); // Re-render table
+  }
+
+  showAllPatients();
+
+  function confirmLogout() {
+  const confirmExit = confirm("Are you sure you want to log out?");
+  if (confirmExit) {
+    window.location.href = "login.html";
+  }
+}
+
+</script>
+
 </body>
 </html>
