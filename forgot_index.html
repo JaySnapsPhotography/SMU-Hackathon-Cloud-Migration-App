@@ -4,8 +4,11 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Forgot Password - CareConnect</title>
+    <!-- Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Three.js CDN -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <!-- Firebase SDKs -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
         import { getAuth, sendPasswordResetEmail, signInWithCustomToken, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
@@ -18,7 +21,7 @@
 
         let auth;
         let db; // Firestore instance
-        let userId = null;
+        let userId = null; // Still keep userId variable if needed for other Firebase interactions
         let isAuthReady = false;
 
         // Initialize Firebase on window load
@@ -50,29 +53,15 @@
                         }
                     }
                     isAuthReady = true; // Auth process is complete
-                    updateUserIdDisplay();
                 });
             } catch (error) {
                 console.error("Firebase initialization failed:", error);
                 isAuthReady = true; // Allow UI to load even if Firebase init fails
                 userId = crypto.randomUUID(); // Fallback for userId
-                updateUserIdDisplay();
             }
 
             initThreeAnimation(); // Start Three.js animation after Firebase init
         };
-
-        function updateUserIdDisplay() {
-            const userIdDisplay = document.getElementById('userIdDisplay');
-            if (userIdDisplay) {
-                userIdDisplay.innerHTML = `
-                    Current User ID: <span class="font-semibold">${userId}</span>
-                    ${initialAuthToken ? " (Authenticated)" : " (Anonymous)"}
-                `;
-                userIdDisplay.parentNode.classList.remove('bg-yellow-500');
-                userIdDisplay.parentNode.classList.add('bg-blue-600');
-            }
-        }
 
         // --- Three.js Animation Setup ---
         let scene, camera, renderer;
@@ -369,12 +358,10 @@
 </head>
 <body class="relative flex flex-col items-center justify-center min-h-screen bg-gradient-to-br from-blue-100 to-purple-100 overflow-hidden font-inter antialiased">
 
-    <div id="authStatusContainer" class="absolute top-0 w-full bg-yellow-500 text-white p-2 text-center text-sm rounded-b-lg shadow-md z-20">
-        <p id="userIdDisplay">Initializing authentication...</p>
-    </div>
-
+    <!-- Three.js Canvas for Background Animation -->
     <canvas id="three-canvas" class="absolute inset-0 z-0"></canvas>
 
+    <!-- Forgot Password Form Container -->
     <div class="relative z-10 bg-white p-8 md:p-10 rounded-2xl shadow-xl max-w-sm w-full backdrop-filter backdrop-blur-sm bg-opacity-80 border border-gray-200">
         <h2 class="text-3xl font-bold text-gray-800 mb-6 text-center">Forgot Password?</h2>
         <p class="text-gray-600 mb-6 text-center">
