@@ -1,0 +1,423 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Forgot Password - CareConnect</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAuth, sendPasswordResetEmail, signInWithCustomToken, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js"; // Included for completeness with other modules
+
+        // Global variables provided by Canvas environment
+        const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : {};
+        const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-careconnect-app-id';
+        const initialAuthToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
+
+        let auth;
+        let db; // Firestore instance
+        let userId = null;
+        let isAuthReady = false;
+
+        // Initialize Firebase on window load
+        window.onload = function() {
+            try {
+                const app = initializeApp(firebaseConfig);
+                auth = getAuth(app);
+                db = getFirestore(app); // Initialize Firestore
+
+                onAuthStateChanged(auth, async (user) => {
+                    if (user) {
+                        userId = user.uid;
+                        console.log("Firebase Auth Ready. User ID:", userId);
+                    } else {
+                        console.log("No user signed in. Attempting anonymous sign-in...");
+                        try {
+                            if (initialAuthToken) {
+                                await signInWithCustomToken(auth, initialAuthToken);
+                                userId = auth.currentUser?.uid || crypto.randomUUID();
+                                console.log("Signed in with custom token.");
+                            } else {
+                                await signInAnonymously(auth);
+                                userId = auth.currentUser?.uid || crypto.randomUUID();
+                                console.log("Signed in anonymously.");
+                            }
+                        } catch (error) {
+                            console.error("Firebase Auth Error:", error);
+                            userId = crypto.randomUUID(); // Fallback to random ID if auth fails
+                        }
+                    }
+                    isAuthReady = true; // Auth process is complete
+                    updateUserIdDisplay();
+                });
+            } catch (error) {
+                console.error("Firebase initialization failed:", error);
+                isAuthReady = true; // Allow UI to load even if Firebase init fails
+                userId = crypto.randomUUID(); // Fallback for userId
+                updateUserIdDisplay();
+            }
+
+            initThreeAnimation(); // Start Three.js animation after Firebase init
+        };
+
+        function updateUserIdDisplay() {
+            const userIdDisplay = document.getElementById('userIdDisplay');
+            if (userIdDisplay) {
+                userIdDisplay.innerHTML = `
+                    Current User ID: <span class="font-semibold">${userId}</span>
+                    ${initialAuthToken ? " (Authenticated)" : " (Anonymous)"}
+                `;
+                userIdDisplay.parentNode.classList.remove('bg-yellow-500');
+                userIdDisplay.parentNode.classList.add('bg-blue-600');
+            }
+        }
+
+        // --- Three.js Animation Setup ---
+        let scene, camera, renderer;
+        let sphere1, particlesMesh1;
+        let sphere2, particlesMesh2;
+        let animationFrameId;
+        let canvasElement;
+
+        function initThreeAnimation() {
+            canvasElement = document.getElementById('three-canvas');
+            if (!canvasElement) return;
+
+            // Scene
+            scene = new THREE.Scene();
+            scene.background = new THREE.Color(0xf0f4f8); // Light blue-grey background, calming tone
+
+            // Camera
+            camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+            camera.position.z = 2; // Keep camera relatively close
+
+            // Renderer
+            renderer = new THREE.WebGLRenderer({ canvas: canvasElement, antialias: true, alpha: true });
+            renderer.setPixelRatio(window.devicePixelRatio);
+            renderer.setSize(window.innerWidth, window.innerHeight);
+
+            // --- Animation Set 1 (Left Side - Cool Tone) ---
+            const geometry1 = new THREE.SphereGeometry(0.8, 64, 64);
+            const material1 = new THREE.MeshPhongMaterial({
+                color: 0x87CEEB, // Sky Blue
+                emissive: 0x87CEEB,
+                emissiveIntensity: 0.6,
+                specular: 0xffffff,
+                shininess: 80,
+                transparent: true,
+                opacity: 0.85,
+            });
+            sphere1 = new THREE.Mesh(geometry1, material1);
+            sphere1.position.x = -2; // Position to the left
+            scene.add(sphere1);
+
+            const particlesGeometry1 = new THREE.BufferGeometry();
+            const particlesCount = 1500;
+            const posArray1 = new Float32Array(particlesCount * 3);
+            const colorArray1 = new Float32Array(particlesCount * 3);
+
+            for(let i = 0; i < particlesCount * 3; i += 3) {
+                posArray1[i] = (Math.random() - 0.5) * 6; // Spread particles around sphere1
+                posArray1[i+1] = (Math.random() - 0.5) * 6;
+                posArray1[i+2] = (Math.random() - 0.5) * 6;
+
+                // Subtle color variation for particles (light blues, purples)
+                const hue = Math.random() * (260 - 180) + 180;
+                const saturation = Math.random() * 0.3 + 0.7;
+                const lightness = Math.random() * 0.2 + 0.7;
+                const color = new THREE.Color().setHSL(hue / 360, saturation, lightness);
+                colorArray1[i] = color.r;
+                colorArray1[i+1] = color.g;
+                colorArray1[i+2] = color.b;
+            }
+
+            particlesGeometry1.setAttribute('position', new THREE.BufferAttribute(posArray1, 3));
+            particlesGeometry1.setAttribute('color', new THREE.BufferAttribute(colorArray1, 3));
+            const particlesMaterial1 = new THREE.PointsMaterial({
+                size: 0.03,
+                vertexColors: true,
+                transparent: true,
+                opacity: 0.8,
+                blending: THREE.AdditiveBlending,
+                depthWrite: false,
+            });
+            particlesMesh1 = new THREE.Points(particlesGeometry1, particlesMaterial1);
+            particlesMesh1.position.x = -2; // Position with sphere1
+            scene.add(particlesMesh1);
+
+            // --- Animation Set 2 (Right Side - Warm Tone) ---
+            const geometry2 = new THREE.SphereGeometry(0.8, 64, 64);
+            const material2 = new THREE.MeshPhongMaterial({
+                color: 0xFFB6C1, // Light Pink
+                emissive: 0xFFB6C1,
+                emissiveIntensity: 0.6,
+                specular: 0xffffff,
+                shininess: 80,
+                transparent: true,
+                opacity: 0.85,
+            });
+            sphere2 = new THREE.Mesh(geometry2, material2);
+            sphere2.position.x = 2; // Position to the right
+            scene.add(sphere2);
+
+            const particlesGeometry2 = new THREE.BufferGeometry();
+            const posArray2 = new Float32Array(particlesCount * 3);
+            const colorArray2 = new Float32Array(particlesCount * 3);
+
+            for(let i = 0; i < particlesCount * 3; i += 3) {
+                posArray2[i] = (Math.random() - 0.5) * 6; // Spread particles around sphere2
+                posArray2[i+1] = (Math.random() - 0.5) * 6;
+                posArray2[i+2] = (Math.random() - 0.5) * 6;
+
+                // Subtle color variation for particles (light pinks, oranges)
+                const hue = Math.random() * (60 - 0) + 0; // Hues from red to yellow
+                const saturation = Math.random() * 0.3 + 0.7;
+                const lightness = Math.random() * 0.2 + 0.7;
+                const color = new THREE.Color().setHSL(hue / 360, saturation, lightness);
+                colorArray2[i] = color.r;
+                colorArray2[i+1] = color.g;
+                colorArray2[i+2] = color.b;
+            }
+
+            particlesGeometry2.setAttribute('position', new THREE.BufferAttribute(posArray2, 3));
+            particlesGeometry2.setAttribute('color', new THREE.BufferAttribute(colorArray2, 3));
+            const particlesMaterial2 = new THREE.PointsMaterial({
+                size: 0.03,
+                vertexColors: true,
+                transparent: true,
+                opacity: 0.8,
+                blending: THREE.AdditiveBlending,
+                depthWrite: false,
+            });
+            particlesMesh2 = new THREE.Points(particlesGeometry2, particlesMaterial2);
+            particlesMesh2.position.x = 2; // Position with sphere2
+            scene.add(particlesMesh2);
+
+            // Lights (shared)
+            const ambientLight = new THREE.AmbientLight(0x404040, 2.5);
+            scene.add(ambientLight);
+            const pointLight = new THREE.PointLight(0xffffff, 1.2, 100);
+            pointLight.position.set(0, 0, 5);
+            scene.add(pointLight);
+
+
+            animateThree(); // Start the animation loop
+            window.addEventListener('resize', onWindowResize);
+        }
+
+        function animateThree() {
+            animationFrameId = requestAnimationFrame(animateThree);
+
+            const time = Date.now() * 0.0005;
+
+            // Animate Set 1
+            if (sphere1) {
+                sphere1.rotation.x += 0.001;
+                sphere1.rotation.y += 0.0015;
+                sphere1.position.y = Math.sin(time * 0.8) * 0.15; // Gentle up/down float
+                sphere1.position.x = -2 + Math.cos(time * 0.6) * 0.1; // Oscillate around initial -2 position
+                sphere1.material.emissiveIntensity = 0.6 + Math.sin(time * 1.5) * 0.2; // Pulsation
+            }
+            if (particlesMesh1) {
+                particlesMesh1.rotation.y += 0.0003;
+                particlesMesh1.rotation.x += 0.0001;
+                // Update particle positions relative to sphere1's movement
+                particlesMesh1.position.y = sphere1.position.y;
+                particlesMesh1.position.x = sphere1.position.x;
+                const positions = particlesMesh1.geometry.attributes.position.array;
+                for (let i = 0; i < positions.length; i += 3) {
+                    const dx = positions[i];
+                    const dy = positions[i+1];
+                    const dz = positions[i+2];
+                    const distance = Math.sqrt(dx*dx + dy*dy + dz*dz);
+                    const normalizedDirectionX = dx / distance;
+                    const normalizedDirectionY = dy / distance;
+                    const normalizedDirectionZ = dz / distance;
+                    const pulseEffect = Math.sin(time * 1.5) * 0.0001;
+                    // Note: This radial movement should be around the particle's initial relative position to the sphere.
+                    // For simplicity and visual effect here, we're applying a slight global pulse effect.
+                    positions[i] += normalizedDirectionX * pulseEffect;
+                    positions[i+1] += normalizedDirectionY * pulseEffect;
+                    positions[i+2] += normalizedDirectionZ * pulseEffect;
+                }
+                particlesMesh1.geometry.attributes.position.needsUpdate = true;
+            }
+
+            // Animate Set 2 (slightly offset or mirrored animation)
+            if (sphere2) {
+                sphere2.rotation.x -= 0.001; // Opposite rotation
+                sphere2.rotation.y -= 0.0015;
+                sphere2.position.y = Math.cos(time * 0.8) * 0.15; // Offset phase for y-movement
+                sphere2.position.x = 2 + Math.sin(time * 0.6) * 0.1; // Oscillate around initial 2 position
+                sphere2.material.emissiveIntensity = 0.6 + Math.cos(time * 1.5) * 0.2; // Offset phase for pulsation
+            }
+            if (particlesMesh2) {
+                particlesMesh2.rotation.y -= 0.0003;
+                particlesMesh2.rotation.x -= 0.0001;
+                // Update particle positions relative to sphere2's movement
+                particlesMesh2.position.y = sphere2.position.y;
+                particlesMesh2.position.x = sphere2.position.x;
+                const positions = particlesMesh2.geometry.attributes.position.array;
+                 for (let i = 0; i < positions.length; i += 3) {
+                    const dx = positions[i];
+                    const dy = positions[i+1];
+                    const dz = positions[i+2];
+                    const distance = Math.sqrt(dx*dx + dy*dy + dz*dz);
+                    const normalizedDirectionX = dx / distance;
+                    const normalizedDirectionY = dy / distance;
+                    const normalizedDirectionZ = dz / distance;
+                    const pulseEffect = Math.cos(time * 1.5) * 0.0001; // Offset phase for pulse effect
+                    positions[i] += normalizedDirectionX * pulseEffect;
+                    positions[i+1] += normalizedDirectionY * pulseEffect;
+                    positions[i+2] += normalizedDirectionZ * pulseEffect;
+                }
+                particlesMesh2.geometry.attributes.position.needsUpdate = true;
+            }
+
+
+            renderer.render(scene, camera);
+        }
+
+        function onWindowResize() {
+            if (camera && renderer) {
+                camera.aspect = window.innerWidth / window.innerHeight;
+                camera.updateProjectionMatrix();
+                renderer.setSize(window.innerWidth, window.innerHeight);
+            }
+        }
+
+        // --- Form Handling Logic ---
+        async function handleResetPassword(event) {
+            event.preventDefault(); // Prevent default form submission
+
+            const emailInput = document.getElementById('email');
+            const messageDiv = document.getElementById('messageDisplay');
+            const resetButton = document.getElementById('resetButton');
+            const spinner = document.getElementById('spinner');
+
+            const email = emailInput.value.trim();
+
+            // Clear previous messages
+            messageDiv.textContent = '';
+            messageDiv.className = 'hidden'; // Hide message initially
+
+            if (!email) {
+                messageDiv.textContent = 'Please enter your email address.';
+                messageDiv.className = 'mt-6 p-3 rounded-lg text-sm bg-red-100 text-red-700 border border-red-200';
+                return;
+            }
+
+            if (!isAuthReady) {
+                messageDiv.textContent = 'System is not ready. Please wait for authentication to initialize.';
+                messageDiv.className = 'mt-6 p-3 rounded-lg text-sm bg-red-100 text-red-700 border border-red-200';
+                return;
+            }
+
+            // Set loading state
+            resetButton.disabled = true;
+            spinner.classList.remove('hidden');
+            resetButton.textContent = 'Sending...';
+            resetButton.classList.add('bg-blue-300', 'cursor-not-allowed');
+            resetButton.classList.remove('bg-blue-600', 'hover:bg-blue-700', 'active:scale-98');
+
+            try {
+                await sendPasswordResetEmail(auth, email);
+                messageDiv.textContent = 'A password reset link has been sent to your email address.';
+                messageDiv.className = 'mt-6 p-3 rounded-lg text-sm bg-green-100 text-green-700 border border-green-200';
+                emailInput.value = ''; // Clear email field on success
+            } catch (error) {
+                console.error("Error sending password reset email:", error);
+                let errorMessage = "Failed to send password reset email. Please try again.";
+                if (error.code === 'auth/user-not-found') {
+                    errorMessage = "No user found with that email address.";
+                } else if (error.code === 'auth/invalid-email') {
+                    errorMessage = "Invalid email address format.";
+                }
+                messageDiv.textContent = errorMessage;
+                messageDiv.className = 'mt-6 p-3 rounded-lg text-sm bg-red-100 text-red-700 border border-red-200';
+            } finally {
+                // Reset loading state
+                resetButton.disabled = false;
+                spinner.classList.add('hidden');
+                resetButton.textContent = 'Send Reset Link';
+                resetButton.classList.remove('bg-blue-300', 'cursor-not-allowed');
+                resetButton.classList.add('bg-blue-600', 'hover:bg-blue-700', 'active:scale-98');
+            }
+        }
+
+
+        // Attach event listeners after DOM is loaded
+        document.addEventListener('DOMContentLoaded', () => {
+            const forgotPasswordForm = document.getElementById('forgotPasswordForm');
+            if (forgotPasswordForm) {
+                forgotPasswordForm.addEventListener('submit', handleResetPassword);
+            }
+        });
+    </script>
+    <style>
+        body {
+            margin: 0;
+            overflow: hidden; /* Prevent scrollbars from the canvas */
+            font-family: 'Inter', sans-serif; /* Set Inter font */
+        }
+        canvas {
+            display: block;
+        }
+    </style>
+</head>
+<body class="relative flex flex-col items-center justify-center min-h-screen bg-gradient-to-br from-blue-100 to-purple-100 overflow-hidden font-inter antialiased">
+
+    <div id="authStatusContainer" class="absolute top-0 w-full bg-yellow-500 text-white p-2 text-center text-sm rounded-b-lg shadow-md z-20">
+        <p id="userIdDisplay">Initializing authentication...</p>
+    </div>
+
+    <canvas id="three-canvas" class="absolute inset-0 z-0"></canvas>
+
+    <div class="relative z-10 bg-white p-8 md:p-10 rounded-2xl shadow-xl max-w-sm w-full backdrop-filter backdrop-blur-sm bg-opacity-80 border border-gray-200">
+        <h2 class="text-3xl font-bold text-gray-800 mb-6 text-center">Forgot Password?</h2>
+        <p class="text-gray-600 mb-6 text-center">
+            Enter your email address below and we'll send you a link to reset your password.
+        </p>
+
+        <form id="forgotPasswordForm" class="space-y-6">
+            <div>
+                <label for="email" class="block text-sm font-medium text-gray-700 mb-2">
+                    Email Address
+                </label>
+                <input
+                    type="email"
+                    id="email"
+                    name="email"
+                    required
+                    class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all duration-200"
+                    placeholder="your.email@example.com"
+                />
+            </div>
+
+            <button
+                type="submit"
+                id="resetButton"
+                class="w-full py-3 px-4 rounded-lg font-semibold text-white transition-all duration-300 transform bg-blue-600 hover:bg-blue-700 active:scale-98 shadow-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50 flex items-center justify-center"
+            >
+                <svg id="spinner" class="animate-spin h-5 w-5 mr-3 text-white hidden" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                </svg>
+                Send Reset Link
+            </button>
+        </form>
+
+        <div id="messageDisplay" class="hidden"></div>
+
+        <p class="text-center text-sm text-gray-500 mt-6">
+            Remember your password?
+            <a href="#" class="text-blue-600 hover:underline">
+                Log In
+            </a>
+        </p>
+    </div>
+
+</body>
+</html>
